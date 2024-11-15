@@ -32,6 +32,8 @@ df = pd.read_sql(query, engine)
 ###   받은 데이터 VectorDB 적재  ###
 ####################################
 
+ELASTIC_HOST = os.environ.get('ELASTIC_HOST')
+ELASTIC_PORT = os.environ.get('ELASTIC_PORT')
 ELASTIC_ID = os.environ.get('ELASTIC_ID')
 ELASTIC_PASSWORD = os.environ.get('ELASTIC_PASSWORD')
 
@@ -43,7 +45,7 @@ embeddings = HuggingFaceEmbeddings(
 
 # ElasticSearch 벡터 스토어 설정
 client = ElasticsearchStore(
-    es_url="http://regularmark.iptime.org:49200",
+    es_url=f"http://{ELASTIC_HOST}:{ELASTIC_PORT}",
     index_name="article-index",
     es_user=ELASTIC_ID,
     es_password=ELASTIC_PASSWORD,
