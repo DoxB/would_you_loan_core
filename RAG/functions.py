@@ -14,6 +14,8 @@ load_dotenv()
 def retriever(user_question):
     ELASTIC_ID = os.environ.get('ELASTIC_ID')
     ELASTIC_PASSWORD = os.environ.get('ELASTIC_PASSWORD')
+    ELASTIC_HOST = os.environ.get('ELASTIC_HOST')
+    ELASTIC_PORT = os.environ.get('ELASTIC_PORT')
 
     # 임베딩 모델 설정
     embeddings = HuggingFaceEmbeddings(
@@ -23,7 +25,7 @@ def retriever(user_question):
 
     # ElasticSearch 벡터 스토어 설정
     client = ElasticsearchStore(
-        es_url="http://regularmark.iptime.org:49200",
+        es_url=f"http://{ELASTIC_HOST}:{ELASTIC_PORT}",
         index_name="article-index",
         es_user=ELASTIC_ID,
         es_password=ELASTIC_PASSWORD,
@@ -73,7 +75,10 @@ def augmented(user_question, result):
 ##################
 
 def generation(text):
-    vllm_host = "http://regularmark.iptime.org:43800"
+    VLLM_HOST = os.environ.get('VLLM_HOST')
+    VLLM_PORT = os.environ.get('VLLM_PORT')
+
+    vllm_host = f"http://{VLLM_HOST}:{VLLM_PORT}"
     url = f"{vllm_host}/generate"
     headers = {"Content-Type": "application/json"}
     data = {
