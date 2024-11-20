@@ -11,7 +11,7 @@ load_dotenv()
 #################
 ### Retriever ###
 #################
-def retriever(user_question):
+def retriever(user_question, top_num):
     ELASTIC_ID = os.environ.get('ELASTIC_ID')
     ELASTIC_PASSWORD = os.environ.get('ELASTIC_PASSWORD')
     ELASTIC_HOST = os.environ.get('ELASTIC_HOST')
@@ -32,7 +32,7 @@ def retriever(user_question):
         embedding=embeddings)
 
     query = user_question
-    result = client.similarity_search(query, top_k=3)
+    result = client.similarity_search(query, k=top_num)
 
     return result
 
