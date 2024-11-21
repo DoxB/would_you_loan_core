@@ -13,11 +13,11 @@ from sqlalchemy import create_engine
 ####################################
 
 ## 엑셀 파일 df 변환
-file_path = 'NewsResult_20240814-20241114.xlsx'
+file_path = 'NewsResult_with_sentiment.xlsx'
 df = pd.read_excel(file_path, dtype={'뉴스 식별자': str})
 
 ## 필요한 열만 남기기
-columns_to_keep = ['뉴스 식별자', '일자', '언론사', '제목', '키워드', '본문', 'URL']
+columns_to_keep = ['뉴스 식별자', '일자', '언론사', '제목', '키워드', '본문', 'URL', 'sentiment_desc']
 df = df[columns_to_keep]
 
 ## '일자' 열을 DATE 형식으로 변환
@@ -27,9 +27,7 @@ df['일자'] = pd.to_datetime(df['일자'], format='%Y%m%d').dt.date
 df = df.dropna()
 
 ## 컬럼명 변경
-df.columns = ['article_id', 'article_date', 'company', 'title', 'keywords', 'content', 'url']
-
-
+df.columns = ['article_id', 'article_date', 'company', 'title', 'keywords', 'content', 'url', 'sentiment']
 
 ####################################
 ###     DataFrame DB 업데이트    ###
