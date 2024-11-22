@@ -42,7 +42,9 @@ async def vs_service(requset: KeywordRequest):
             "title": result.metadata['title'],
             "article_date": result.metadata['article_date'],
             "company": result.metadata['company'],
-            "url": result.metadata['url']
+            "url": result.metadata['url'],
+            "keywords": result.metadata['keywords'],
+            "sentiment": result.metadata['sentiment']
         })
 
     return response
