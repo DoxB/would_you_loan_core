@@ -40,7 +40,7 @@ async def vs_service(requset: KeywordRequest):
     for result in results:
         response.append({
             "title": result.metadata['title'],
-            "article_date": result.metadata['article_date'],
+            "articleDate": result.metadata['article_date'],
             "company": result.metadata['company'],
             "url": result.metadata['url'],
             "keywords": result.metadata['keywords'],
