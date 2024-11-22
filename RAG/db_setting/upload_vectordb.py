@@ -24,7 +24,7 @@ DB = os.environ.get('DB')
 engine = create_engine(f"mysql+pymysql://{DB_ID}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB}")
 
 # 쿼리를 실행하여 DataFrame으로 로드
-query = "SELECT article_id, article_date, company, title, url, content FROM news_articles"
+query = "SELECT article_id, article_date, company, title, url, content, keywords, sentiment FROM news_articles"
 df = pd.read_sql(query, engine)
 
 
@@ -60,7 +60,9 @@ for _, row in tqdm(df.iterrows()):
             "title": row['title'],
             "article_date": row['article_date'],
             "company": row['company'],
-            "url": row['url']
+            "url": row['url'],
+            "keywords": row['keywords'],
+            "sentiment": row['sentiment']
         }
     )
     # ElasticSearch에 문서를 추가하며 article_id를 _id로 설정하여 덮어쓰기
