@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from database import KookminEngineconn, WooriEngineconn, ShinhanEngineconn, EtcEngineconn
-from models import KookminLoan, WooriLoan, ShinhanLoan, EtcLoan
-from items import KookminLoanItem, WooriLoanItem, ShinhanLoanItem, EtcLoanItem, UserIdRequest, LoanDeleteRequest
+from database import *
+from models import *
+from items import *
 
 app = FastAPI()
 
@@ -16,8 +16,8 @@ etc_engine = EtcEngineconn()
 ####################################
 
 ### 대출정보 끌어오기
-@app.post("/mydata")
-async def get_mydata(request: UserIdRequest):
+@app.post("/mydata_loan")
+async def get_mydata_loan(request: UserIdRequest):
     ### DB 연결 세션 열기
     kookmin_session = kookmin_engine.sessionmaker()
     woori_session = woori_engine.sessionmaker()
@@ -42,6 +42,32 @@ async def get_mydata(request: UserIdRequest):
         etc_session.close()
 
 
+### 예적금정보 끌어오기
+@app.post("/mydata_account")
+async def get_mydata_account(request: UserIdRequest):
+    ### DB 연결 세션 열기
+    kookmin_session = kookmin_engine.sessionmaker()
+    woori_session = woori_engine.sessionmaker()
+    shinhan_session = shinhan_engine.sessionmaker()
+    etc_session = etc_engine.sessionmaker()
+
+    try:
+        ### 정보 끌어오기
+        user_id = request.user_id
+        account_info = kookmin_session.query(KookminAccount).filter(KookminAccount.user_id == user_id).all()
+        account_info += woori_session.query(WooriAccount).filter(WooriAccount.user_id == user_id).all()
+        account_info += shinhan_session.query(ShinhanAccount).filter(ShinhanAccount.user_id == user_id).all()
+        account_info += etc_session.query(EtcAccount).filter(EtcAccount.user_id == user_id).all()
+
+        return account_info
+
+    finally:
+        ### 세션 종료
+        kookmin_session.close()
+        woori_session.close()
+        shinhan_session.close()
+        etc_session.close()
+
 ####################################
 ###      신규대출 업데이트       ###
 ####################################
@@ -57,6 +83,7 @@ async def add_kookmin_loan(request: KookminLoanItem):
             user_id=request.user_id,
             bank_name=request.bank_name,
             loan_name=request.loan_name,
+            loan_category=request.loan_category,
             loan_amount=request.loan_amount,
             interest_rate=request.interest_rate,
             loan_start_date=request.loan_start_date,
@@ -85,6 +112,7 @@ async def add_woori_loan(request: WooriLoanItem):
             user_id=request.user_id,
             bank_name=request.bank_name,
             loan_name=request.loan_name,
+            loan_category=request.loan_category,
             loan_amount=request.loan_amount,
             interest_rate=request.interest_rate,
             loan_start_date=request.loan_start_date,
@@ -113,6 +141,7 @@ async def add_shinhan_loan(request: ShinhanLoanItem):
             user_id=request.user_id,
             bank_name=request.bank_name,
             loan_name=request.loan_name,
+            loan_category=request.loan_category,
             loan_amount=request.loan_amount,
             interest_rate=request.interest_rate,
             loan_start_date=request.loan_start_date,
@@ -141,6 +170,7 @@ async def add_etc_loan(request: EtcLoanItem):
             user_id=request.user_id,
             bank_name=request.bank_name,
             loan_name=request.loan_name,
+            loan_category=request.loan_category,
             loan_amount=request.loan_amount,
             interest_rate=request.interest_rate,
             loan_start_date=request.loan_start_date,
