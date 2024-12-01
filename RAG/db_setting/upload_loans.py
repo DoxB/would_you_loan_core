@@ -44,4 +44,4 @@ engine = create_engine(f"mysql+pymysql://{DB_ID}:{DB_PASSWORD}@{DB_HOST}:{DB_POR
 
 # DataFrame을 DB 테이블로 업로드
 table_name = 'loans'
-df.to_sql(table_name, con=engine, if_exists='replace', index=False)
+df.to_sql(table_name, con=engine, if_exists='append', index=False)
