@@ -1,0 +1,132 @@
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_elasticsearch import ElasticsearchStore
+from langchain_community.tools.tavily_search import TavilySearchResults
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
+
+load_dotenv()
+
+SIMILARITY_THRESHOLD = 0.59
+
+REAL_ESTATE_KEYWORDS = [
+    '부동산', '아파트', '주택', '분양', '청약', '재건축', '재개발', '집값', '전세', 
+    '월세', '매매', '임대', '부동산시장', '부동산정책', '주거', '주택시장', '분양가',
+    '분양권', '입주', '부동산중개', '부동산대책', '부동산규제', '주택공급'
+]
+
+def is_real_estate_article(doc):
+    """문서가 부동산 관련 기사인지 확인"""
+    # 제목, 키워드, 본문에서 부동산 관련 키워드 확인
+    title = doc.metadata.get('title', '').lower()
+    keywords = doc.metadata.get('keywords', '').lower()
+    content = doc.page_content.lower()
+    
+    # 키워드 매칭 체크
+    for keyword in REAL_ESTATE_KEYWORDS:
+        if (keyword in title) or (keyword in keywords) or (keyword in content):
+            return True
+    return False
+
+#################
+### Retriever ###
+#################
+def retriever(user_question, top_num):
+    ELASTIC_ID = os.environ.get('ELASTIC_ID')
+    ELASTIC_PASSWORD = os.environ.get('ELASTIC_PASSWORD')
+    ELASTIC_HOST = os.environ.get('ELASTIC_HOST')
+    ELASTIC_PORT = os.environ.get('ELASTIC_PORT')
+
+    embeddings = HuggingFaceEmbeddings(
+        model_name="./embedding/model/bge-m3",
+        model_kwargs={'device': 'cpu'}
+    )
+
+    client = ElasticsearchStore(
+        es_url=f"http://{ELASTIC_HOST}:{ELASTIC_PORT}",
+        index_name="article-index",
+        es_user=ELASTIC_ID,
+        es_password=ELASTIC_PASSWORD,
+        embedding=embeddings)
+
+    results_with_scores = client.similarity_search_with_score(user_question, k=top_num)
+    
+    results = []
+    scores = []
+    for doc, score in results_with_scores:
+        results.append(doc)
+        normalized_score = 1 / (1 + score)
+        scores.append(normalized_score)
+
+    return results, scores
+
+#################
+### Augmented ###
+#################
+def augmented(user_question, search_results):
+    results, scores = search_results
+    
+    PROMPT = '''당신은 유용한 AI 어시스턴트입니다. 
+    사용자의 질문에 대해 관련 정보를 바탕으로 답변하세요.
+    답변은 완결된 문장으로 작성하고, 중간에 끊기지 않도록 하세요.'''
+
+    # 유사도가 높고 부동산 관련 문서인 경우만 사용
+    has_relevant_doc = (scores and scores[0] > SIMILARITY_THRESHOLD and 
+                       results and is_real_estate_article(results[0]))
+
+    if has_relevant_doc:
+        # 유사도가 높고 부동산 관련 문서가 있는 경우
+        content = results[0].page_content
+        summarized_content = content if len(content) < 1000 else content[:1000]
+        context = f"""
+        검색된 관련 부동산 기사 내용:
+        {summarized_content}
+        
+        위 기사의 내용을 참고하여 질문에 답변해주세요.
+        """
+    else:
+        # 부동산 관련 문서가 없거나 유사도가 낮은 경우 Tavily 검색 사용
+        tavily_api_key = os.getenv("TAVILY_API_KEY")
+        search = TavilySearchResults()
+        search_results = search.run(user_question)
+        
+        context = f"""
+        검색 결과를 바탕으로 답변해주세요. 
+        검색된 일반적인 정보를 활용하여 최선을 다해 답변하되, 
+        특정 기사나 문서를 직접적으로 인용하지 마세요.
+        """
+
+    question = f"""사용자 질문: {user_question}
+
+{context}
+
+답변 작성 시 다음 사항을 지켜주세요:
+1. 질문에 대해 명확하고 직접적으로 답변하기
+2. {'검색된 부동산 기사의 내용을 활용하여 구체적인 설명 제공' if has_relevant_doc else '검색된 일반 정보를 바탕으로 관련 정보 제공'}
+3. 답변은 친절하고 전문적인 톤으로 작성하기"""
+
+    messages = [
+        {"role": "system", "content": PROMPT},
+        {"role": "user", "content": question}
+    ]
+
+    return messages, has_relevant_doc
+
+##################
+### generation ###
+##################
+def generation(messages_with_flag):
+    messages, has_relevant_doc = messages_with_flag
+    
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    response = client.chat.completions.create(
+        model="gpt-4",  # 또는 "gpt-3.5-turbo"
+        messages=messages,
+        max_tokens=512,
+        temperature=0.6,
+        top_p=0.9
+    )
+
+    answer = response.choices[0].message.content
+    return answer, has_relevant_doc

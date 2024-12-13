@@ -13,7 +13,7 @@ from sqlalchemy import create_engine
 ####################################
 
 ## 엑셀 파일 df 변환
-file_path = 'ujloan_loans_v4.csv'
+file_path = 'ujloan_loans_v5.csv'
 df = pd.read_csv(file_path)
 
 ## 필요한 열만 남기기
@@ -25,7 +25,7 @@ columns_to_keep = ['bank_name', 'loan_name', 'repayment_type', 'interest_rate_ty
 df = df[columns_to_keep]
 
 ## 결측값이 포함된 행 제거
-df = df.dropna()
+# df = df.dropna()
 
 ####################################
 ###     DataFrame DB 업데이트    ###
