@@ -1,0 +1,57 @@
+from fastapi import FastAPI
+from items import QuestionRequest, KeywordRequest
+from functions import retriever, augmented, generation
+
+app = FastAPI()
+
+####################################
+###     RAG 이후 답변 보내기     ###
+####################################
+
+### RAG
+@app.post("/rag")
+async def rag_service(request: QuestionRequest):
+    user_id = request.user_id
+    user_question = request.user_question
+
+    # retriever가 (results, scores) 튜플을 반환
+    results, scores = retriever(user_question, 1)
+    messages_with_flag = augmented(user_question, (results, scores))
+    answer, has_relevant_doc = generation(messages_with_flag)
+
+    response = {
+        "user_id": user_id,
+        "answer": answer
+    }
+
+    # 관련 문서가 있고 부동산 관련 문서일 때만 메타데이터 추가
+    if has_relevant_doc and results:
+        response.update({
+            "title": results[0].metadata.get('title', ''),
+            "article_date": results[0].metadata.get('article_date', ''),
+            "company": results[0].metadata.get('company', ''),
+            "url": results[0].metadata.get('url', '')
+        })
+
+    return response
+
+### VectorSearch
+@app.post("/vector_search")
+async def vs_service(request: KeywordRequest):
+    report_location = request.report_location
+
+    # retriever가 (results, scores) 튜플을 반환
+    results, _ = retriever(report_location, 10)
+    response = []
+
+    for result in results:
+        response.append({
+            "title": result.metadata.get('title', ''),
+            "articleDate": result.metadata.get('article_date', ''),
+            "company": result.metadata.get('company', ''),
+            "url": result.metadata.get('url', ''),
+            "keywords": result.metadata.get('keywords', []),
+            "sentiment": result.metadata.get('sentiment', '')
+        })
+
+    return response

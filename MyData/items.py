@@ -94,5 +94,6 @@ class UserIdRequest(BaseModel):
     user_id: int
 
 class LoanDeleteRequest(BaseModel):
-    loan_id: int
-    bank_name: str = None
+    user_id: int
+    loan_name: str
+    loan_amount: int

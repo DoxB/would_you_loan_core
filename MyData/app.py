@@ -199,7 +199,11 @@ async def remove_kookmin_loan(request: LoanDeleteRequest):
     kookmin_session = kookmin_engine.sessionmaker()
 
     try:
-        del_loan = kookmin_session.query(KookminLoan).filter(KookminLoan.loan_id == request.loan_id).first()
+        del_loan = kookmin_session.query(KookminLoan).filter(
+            KookminLoan.user_id == request.user_id,
+            KookminLoan.loan_name == request.loan_name,
+            KookminLoan.loan_amount == request.loan_amount
+        ).first()
 
         kookmin_session.delete(del_loan)
         kookmin_session.commit()
@@ -215,7 +219,11 @@ async def remove_woori_loan(request: LoanDeleteRequest):
     woori_session = woori_engine.sessionmaker()
 
     try:
-        del_loan = woori_session.query(WooriLoan).filter(WooriLoan.loan_id == request.loan_id).first()
+        del_loan = woori_session.query(WooriLoan).filter(
+            WooriLoan.user_id == request.user_id,
+            WooriLoan.loan_name == request.loan_name,
+            WooriLoan.loan_amount == request.loan_amount
+        ).first()
 
         woori_session.delete(del_loan)
         woori_session.commit()
@@ -231,7 +239,11 @@ async def remove_shinhan_loan(request: LoanDeleteRequest):
     shinhan_session = shinhan_engine.sessionmaker()
 
     try:
-        del_loan = shinhan_session.query(ShinhanLoan).filter(ShinhanLoan.loan_id == request.loan_id).first()
+        del_loan = shinhan_session.query(ShinhanLoan).filter(
+            ShinhanLoan.user_id == request.user_id,
+            ShinhanLoan.loan_name == request.loan_name,
+            ShinhanLoan.loan_amount == request.loan_amount
+        ).first()
 
         shinhan_session.delete(del_loan)
         shinhan_session.commit()
@@ -247,7 +259,11 @@ async def remove_etc_loan(request: LoanDeleteRequest):
     etc_session = etc_engine.sessionmaker()
 
     try:
-        del_loan = etc_session.query(EtcLoan).filter(EtcLoan.loan_id == request.loan_id).first()
+        del_loan = etc_session.query(EtcLoan).filter(
+            EtcLoan.user_id == request.user_id,
+            EtcLoan.loan_name == request.loan_name,
+            EtcLoan.loan_amount == request.loan_amount
+        ).first()
 
         etc_session.delete(del_loan)
         etc_session.commit()

@@ -13,7 +13,7 @@ from sqlalchemy import create_engine
 ####################################
 
 ## 엑셀 파일 df 변환
-file_path = 'NewsResult_with_sentiment.xlsx'
+file_path = 'NewsResult_with_sentiment_4.xlsx'
 df = pd.read_excel(file_path, dtype={'뉴스 식별자': str})
 
 ## 필요한 열만 남기기
@@ -22,6 +22,9 @@ df = df[columns_to_keep]
 
 ## '일자' 열을 DATE 형식으로 변환
 df['일자'] = pd.to_datetime(df['일자'], format='%Y%m%d').dt.date
+
+## 최신순 정렬
+df = df.sort_values(by='일자', ascending=False)
 
 ## 결측값이 포함된 행 제거
 df = df.dropna()
